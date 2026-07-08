@@ -1,0 +1,261 @@
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// Nota: Los enums de Prisma no están soportados en SQLite.
+// Se usan campos de tipo String y se validan a nivel de aplicación (DTOs).
+// Al migrar a PostgreSQL en producción se restaurarán los tipos Enum.
+
+model Role {
+  id          String   @id @default(uuid())
+  name        String   @unique // e.g., "SUPER_ADMIN", "JEFE_AREA"
+  description String?
+  permissions String   // Almacena la matriz de permisos serializada en JSON
+  users       User[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Area {
+  id           String     @id @default(uuid())
+  name         String     @unique
+  description  String?
+  color        String     @default("#3B82F6")
+  parentAreaId String?
+  parentArea   Area?      @relation("AreaHierarchy", fields: [parentAreaId], references: [id])
+  subAreas     Area[]     @relation("AreaHierarchy")
+  users        User[]
+  calendars    Calendar[]
+  events       Event[]
+  resources    Resource[]
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+}
+
+model User {
+  id                  String             @id @default(uuid())
+  email               String             @unique
+  passwordHash        String
+  name                String
+  avatarUrl           String?
+  position            String?
+  color               String?
+  roleId              String
+  role                Role               @relation(fields: [roleId], references: [id])
+  areaId              String
+  area                Area               @relation(fields: [areaId], references: [id])
+  status              String             @default("ACTIVE") // ACTIVE, INACTIVE, SUSPENDED
+  refreshTokenHash    String?
+  calendars           Calendar[]
+  responsibleFor      Event[]            @relation("ResponsibleUser")
+  organizedEvents     Event[]            @relation("OrganizerUser")
+  participations      EventParticipant[]
+  sentInvitations     Invitation[]       @relation("SenderUser")
+  receivedInvitations Invitation[]       @relation("RecipientUser")
+  reminders           Reminder[]
+  notifications       Notification[]
+  auditLogs           AuditLog[]
+  preferences         UserPreferences?
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
+}
+
+model UserPreferences {
+  id               String   @id @default(uuid())
+  userId           String   @unique
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  theme            String   @default("light") // "light" | "dark" | "system"
+  language         String   @default("es")
+  calendarSettings String   // Configuración personalizada de visualización (JSON string)
+  updatedAt        DateTime @updatedAt
+}
+
+model Calendar {
+  id          String   @id @default(uuid())
+  name        String
+  type        String   // USER, AREA, INSTITUTIONAL, GLOBAL
+  color       String   @default("#10B981")
+  ownerUserId String?
+  ownerUser   User?    @relation(fields: [ownerUserId], references: [id], onDelete: Cascade)
+  ownerAreaId String?
+  ownerArea   Area?    @relation(fields: [ownerAreaId], references: [id], onDelete: Cascade)
+  isVisible   Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model ResourceCategory {
+  id          String     @id @default(uuid())
+  name        String     @unique // e.g., "Auditorios", "Camionetas"
+  type        String     // ROOM, VEHICLE, EQUIPMENT
+  description String?
+  resources   Resource[]
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+}
+
+model Resource {
+  id           String                     @id @default(uuid())
+  name         String
+  categoryId   String
+  category     ResourceCategory           @relation(fields: [categoryId], references: [id])
+  description  String?
+  status       String                     @default("AVAILABLE") // AVAILABLE, MAINTENANCE, OUT_OF_SERVICE
+  areaId       String?                    // Área custodia del recurso
+  area         Area?                      @relation(fields: [areaId], references: [id])
+  capacity     Int?                       // Para salas/vehículos
+  metadata     String?                    // Datos específicos (Placa, Marca, Serial en JSON string)
+  reservations EventResourceReservation[]
+  createdAt    DateTime                   @default(now())
+  updatedAt    DateTime                   @updatedAt
+}
+
+model Event {
+  id              String                     @id @default(uuid())
+  title           String
+  description     String?
+  type            String                     @default("REUNION") // REUNION, CAPACITACION, etc.
+  priority        String                     @default("MEDIUM") // LOW, MEDIUM, HIGH, CRITICAL
+  status          String                     @default("PENDING_APPROVAL") // DRAFT, PENDING_APPROVAL, APPROVED, REJECTED, CANCELLED
+  startTime       DateTime
+  endTime         DateTime
+  durationMinutes Int
+  color           String                     @default("#3B82F6")
+  isRecurring     Boolean                    @default(false)
+  recurrenceRule  String?                    // Formato RFC 5545 (RRULE)
+  parentEventId   String?
+  parentEvent     Event?                     @relation("Recurrence", fields: [parentEventId], references: [id])
+  recurringEvents Event[]                    @relation("Recurrence")
+  
+  areaId          String                     // Área que organiza el evento
+  area            Area                       @relation(fields: [areaId], references: [id])
+  responsibleId   String                     // Jefe/Director responsable
+  responsible     User                       @relation("ResponsibleUser", fields: [responsibleId], references: [id])
+  organizerId     String                     // Usuario operativo creador
+  organizer       User                       @relation("OrganizerUser", fields: [organizerId], references: [id])
+  
+  location        String?                    // Ubicación física externa si aplica
+  participants    EventParticipant[]
+  reservations    EventResourceReservation[]
+  invitations     Invitation[]
+  reminders       Reminder[]
+  comments        Comment[]
+  history         EventHistory[]
+  tags            String                     @default("[]") // Lista serializada en JSON
+  files           String?                    // URLs y nombres de archivos adjuntos (JSON string)
+  notes           String?
+  
+  createdAt       DateTime                   @default(now())
+  updatedAt       DateTime                   @updatedAt
+
+  @@index([startTime, endTime])
+}
+
+model EventParticipant {
+  id        String   @id @default(uuid())
+  eventId   String
+  event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role      String   @default("REQUIRED") // ORGANIZER, REQUIRED, OPTIONAL
+  status    String   @default("PENDING") // PENDING, ACCEPTED, DECLINED, TENTATIVE
+  comments  String?
+  updatedAt DateTime @updatedAt
+
+  @@unique([eventId, userId])
+}
+
+model EventResourceReservation {
+  id           String   @id @default(uuid())
+  eventId      String
+  event        Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  resourceId   String
+  resource     Resource @relation(fields: [resourceId], references: [id], onDelete: Cascade)
+  status       String   @default("PENDING") // PENDING, APPROVED, REJECTED
+  reservedFrom DateTime
+  reservedTo   DateTime
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([reservedFrom, reservedTo])
+}
+
+model Invitation {
+  id              String   @id @default(uuid())
+  eventId         String
+  event           Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  senderId        String
+  sender          User     @relation("SenderUser", fields: [senderId], references: [id])
+  recipientUserId String?
+  recipientUser   User?    @relation("RecipientUser", fields: [recipientUserId], references: [id])
+  recipientAreaId String?  // Permite invitar a todo un departamento
+  status          String   @default("PENDING") // PENDING, ACCEPTED, DECLINED, TENTATIVE
+  token           String   @unique // Para aprobaciones rápidas por email
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model Reminder {
+  id              String   @id @default(uuid())
+  eventId         String
+  event           Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type            String   @default("IN_APP") // EMAIL, IN_APP, PUSH
+  leadTimeMinutes Int      @default(15) // Tiempo antes del evento
+  isSent          Boolean  @default(false)
+  sendAt          DateTime
+  createdAt       DateTime @default(now())
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String
+  message   String
+  type      String   // "INVITATION_RECEIVED", "EVENT_CANCELLED", "CONFLICT_DETECTED"
+  isRead    Boolean  @default(false)
+  link      String?  // Ruta para navegación en la App
+  createdAt DateTime @default(now())
+}
+
+model Comment {
+  id        String   @id @default(uuid())
+  eventId   String
+  event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  userId    String
+  author    String   // Nombre del usuario
+  content   String
+  createdAt DateTime @default(now())
+}
+
+model EventHistory {
+  id        String   @id @default(uuid())
+  eventId   String
+  event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  userId    String   // Quién realizó el cambio
+  action    String   // e.g., "CREAR", "MODIFICAR_HORA", "APROBAR_SALA"
+  changes   String   // Estado anterior vs estado nuevo (JSON string)
+  createdAt DateTime @default(now())
+}
+
+model AuditLog {
+  id         String   @id @default(uuid())
+  userId     String?
+  user       User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  action     String   // e.g., "CREATE", "UPDATE", "DELETE", "LOGIN"
+  module     String   // e.g., "RESOURCES", "USERS", "EVENTS"
+  entityId   String?
+  entityType String?
+  oldValue   String?  // JSON string
+  newValue   String?  // JSON string
+  ipAddress  String
+  userAgent  String
+  createdAt  DateTime @default(now())
+}

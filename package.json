@@ -1,0 +1,15 @@
+{
+  "name": "sici-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "backend",
+    "frontend"
+  ],
+  "scripts": {
+    "backend:dev": "npm run start:dev -w backend",
+    "backend:build": "npm run build -w backend",
+    "frontend:dev": "npm run dev -w frontend",
+    "frontend:build": "npm run build -w frontend"
+  }
+}
