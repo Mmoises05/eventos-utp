@@ -12,7 +12,8 @@ class SocketService {
       this.socket.disconnect();
     }
 
-    this.socket = io('http://localhost:4000/realtime', {
+    const SOCKET_URL = import.meta.env.PROD ? '' : 'http://localhost:4000';
+    this.socket = io(`${SOCKET_URL}/realtime`, {
       query: { token: accessToken },
       transports: ['websocket'],
     });
