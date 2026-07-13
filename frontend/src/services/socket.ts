@@ -12,7 +12,8 @@ class SocketService {
       this.socket.disconnect();
     }
 
-    const SOCKET_URL = import.meta.env.PROD ? '' : 'http://localhost:4000';
+    const baseSocketUrl = import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace('/api/v1', '') : (import.meta.env.PROD ? '' : 'http://localhost:4000');
+    const SOCKET_URL = baseSocketUrl;
     this.socket = io(`${SOCKET_URL}/realtime`, {
       query: { token: accessToken },
       transports: ['websocket'],
