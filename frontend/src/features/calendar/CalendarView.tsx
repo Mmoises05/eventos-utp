@@ -452,6 +452,10 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ viewMode = 'general'
               {calendarLayers.map((layer) => (
                 <label
                   key={layer.id}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    toggleCalendarFilter(layer.id);
+                  }}
                   style={{
                     display: 'flex',
                     alignItems: 'center',
@@ -462,24 +466,21 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ viewMode = 'general'
                     padding: '4px 0',
                   }}
                 >
-                  <input
-                    type="checkbox"
-                    checked={selectedCalendarIds.includes(layer.id)}
-                    onChange={() => toggleCalendarFilter(layer.id)}
-                    style={{
-                      width: '18px',
-                      height: '18px',
-                      borderRadius: '4px',
-                    accentColor: layer.color === 'rainbow' ? '#8B5CF6' : layer.color,
-                  }}
-                />
-                <span style={{
-                  width: '12px',
-                  height: '12px',
-                  borderRadius: '50%',
-                  background: layer.color === 'rainbow' ? 'linear-gradient(45deg, #EF4444, #F59E0B, #10B981, #3B82F6, #8B5CF6)' : layer.color,
-                  display: 'inline-block',
-                }} />
+                  <div style={{
+                    width: '20px',
+                    height: '20px',
+                    borderRadius: '50%',
+                    background: layer.color === 'rainbow' ? 'linear-gradient(45deg, #EF4444, #F59E0B, #10B981, #3B82F6, #8B5CF6)' : layer.color,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: 'white',
+                    opacity: selectedCalendarIds.includes(layer.id) ? 1 : 0.4,
+                    transition: 'all 0.2s ease',
+                    boxShadow: selectedCalendarIds.includes(layer.id) ? `0 0 8px ${layer.color === 'rainbow' ? '#8B5CF6' : layer.color}80` : 'none',
+                  }}>
+                    {selectedCalendarIds.includes(layer.id) && <Check size={14} strokeWidth={3} />}
+                  </div>
                   {layer.name}
                 </label>
               ))}

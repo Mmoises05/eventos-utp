@@ -134,6 +134,9 @@ export class AuthService {
         name: user.name,
         role: user.role.name,
         area: user.area.name,
+        color: user.color,
+        avatarUrl: user.avatarUrl,
+        position: user.position,
       },
       ...tokens,
     };
