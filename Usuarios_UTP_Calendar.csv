@@ -1,0 +1,13 @@
+Nombre;Correo;Area;Rol;Estado
+"Gabby Sam (Coord SSUU)";"gsam@utp.edu.pe";"Servicios Universitarios";"JEFE_AREA";"ACTIVE"
+"Rodolfo Arboleda (DC)";"rarboleda@utp.edu.pe";"Dirección de Campus";"DIRECTOR";"ACTIVE"
+"Claudia Nuñez (DGA)";"cnunez@utp.edu.pe";"DGA";"DIRECTOR";"ACTIVE"
+"Morelia Rodriguez (GDH)";"mrodriguez@utp.edu.pe";"Gestión del Desarrollo Humano";"JEFE_AREA";"ACTIVE"
+"Katty Arista (Jefa de Lab CCSS)";"karista@utp.edu.pe";"Laboratorios de CCSS";"JEFE_AREA";"ACTIVE"
+"Rosalinda Sandoval (Asistente DC)";"rsandoval@utp.edu.pe";"Dirección de Campus";"USUARIO";"ACTIVE"
+"Jeannina Panduro (Coord. Empleabilidad)";"jpanduro@utp.edu.pe";"Empleabilidad";"JEFE_AREA";"ACTIVE"
+"Luz Sotil (Coord Lab Especializados)";"lsotil@utp.edu.pe";"Laboratorios Especializados";"JEFE_AREA";"ACTIVE"
+"Camila Morales (Asistente de Imagen)";"cmorales@utp.edu.pe";"Imagen Institucional";"USUARIO";"ACTIVE"
+"Administrador del Sistema";"admin@utp.edu.pe";"Dirección de Campus";"SUPER_ADMIN";"ACTIVE"
+"Teresa Díaz";"tdiaz@utp.edu.pe";"Coordinadoras de Operaciones";"JEFE_AREA";"ACTIVE"
+"Lilian Da Silva";"ldasilva@utp.edu.pe";"Coordinadoras de Operaciones";"JEFE_AREA";"ACTIVE"

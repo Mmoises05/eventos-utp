@@ -93,6 +93,8 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ viewMode = 'general'
   const [recurrence, setRecurrence] = useState('NONE'); // NONE, DAILY, WEEKLY
   const [areaId, setAreaId] = useState(currentUser?.area || '');
   const [responsibleId, setResponsibleId] = useState(currentUser?.id || '');
+  const [locationType, setLocationType] = useState('Aula');
+  const [customLocation, setCustomLocation] = useState('');
   const [location, setLocation] = useState('');
   const [selectedResources, setSelectedResources] = useState<string[]>([]);
   const [selectedParticipants, setSelectedParticipants] = useState<string[]>([]);
@@ -323,7 +325,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ viewMode = 'general'
         endTime: endIso,
         areaId,
         responsibleId,
-        location,
+        location: locationType === 'Otro' ? customLocation : locationType,
         notes,
         resourceIds: selectedResources,
         participantIds: selectedParticipants,
@@ -337,6 +339,8 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ viewMode = 'general'
       setStartHour('09:00');
       setEndHour('10:00');
       setRecurrence('NONE');
+      setLocationType('Aula');
+      setCustomLocation('');
       setLocation('');
       setSelectedResources([]);
       setSelectedParticipants([]);
@@ -1096,6 +1100,31 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ viewMode = 'general'
                     </select>
                   );
                 })()}
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">Ambiente / Espacio</label>
+                <select 
+                  className="form-input" 
+                  value={locationType} 
+                  onChange={(e) => setLocationType(e.target.value)}
+                  style={{ marginBottom: locationType === 'Otro' ? '12px' : '0' }}
+                >
+                  <option value="Aula">Aula</option>
+                  <option value="Auditorio">Auditorio</option>
+                  <option value="Sala de Reunión">Sala de Reunión</option>
+                  <option value="Otro">Otro (Especificar)</option>
+                </select>
+                {locationType === 'Otro' && (
+                  <input 
+                    type="text" 
+                    className="form-input" 
+                    placeholder="Escriba el ambiente o lugar..." 
+                    value={customLocation} 
+                    onChange={(e) => setCustomLocation(e.target.value)} 
+                    required 
+                  />
+                )}
               </div>
 
               <div className="form-group">
